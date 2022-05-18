@@ -1,0 +1,42 @@
+WITH LatestIntDate as
+(SELECT MAX(StartDate) StartDate, CounterpartyID
+FROM dbo.ctl_InternalRatingCounterparty
+GROUP BY CounterpartyID)
+
+SELECT
+  cp.Name AS Counterparty,
+  rv.Name AS InternalRating,
+  irc.StartDate AS InternalRatingDate,
+  cs.Name AS Country,
+  clr.RatingAgency AS RatingAgency,
+  clr.Rating AS CountryRating,
+  cg.Name CounterpartyGroup,
+  "RatingDateStatus" =
+  CASE
+  	   WHEN (DATEDIFF(MONTH, irc.StartDate, GETDATE()) > 12)
+  	   THEN CONCAT(DATEDIFF(MONTH, irc.StartDate, GETDATE()) - 12, ' months expired')
+       WHEN (DATEDIFF(MONTH, irc.StartDate, GETDATE()) > 10)
+  	   THEN 'Expires soon'
+       ELSE 'OK'
+  END,
+  "InLineWithCountryRating" =
+  CASE
+  	   WHEN (irc.RatingValueID < clr.RatingID)
+  	   THEN 'CHECK'
+       ELSE 'OK'
+  END
+FROM
+  dbo.ctl_Counterparties AS cp
+  INNER JOIN dbo.ctl_InternalRatingCounterparty AS irc ON (cp.ID = irc.CounterpartyID)
+  INNER JOIN LatestIntDate AS lid ON (lid.StartDate = irc.StartDate AND lid.CounterpartyID = irc.CounterpartyID)
+  INNER JOIN dbo.ctl_RatingValues AS rv ON (irc.RatingValueID = rv.ID)
+  INNER JOIN dbo.ctl_Countries AS cs ON (cp.CountryOfDomicileID = cs.ID)
+  INNER JOIN dbo.CountryLatestAndLowestRating AS clr ON (cs.ID = clr.CountryID)
+  INNER JOIN dbo.ctl_Committees AS cm ON (cm.CounterpartyID = cp.ID)
+  INNER JOIN dbo.ctl_CounterpartyGroup AS cg ON (cg.ID = cm.GroupID)
+WHERE
+ (cg.ID < 3) AND
+ ((irc.RatingValueID < clr.RatingID) OR
+ DATEDIFF(MONTH, irc.StartDate, GETDATE()) > 12)
+
+ORDER BY Counterparty

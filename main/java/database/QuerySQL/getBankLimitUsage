@@ -1,0 +1,59 @@
+WITH Banks AS
+(SELECT ReportDate, BankID, SUM(StartMonthAmount)/100.0 AS FirstUsage, SUM(EndMonthAmount)/100.0 AS LastUsage
+FROM ctl_GuaranteesReports
+WHERE ReportDate = (Select Max(ReportDate) MaxDate FROM ctl_GuaranteesReports)
+GROUP BY ReportDate, BankID),
+
+LatestDates AS
+(SELECT MAX(StartDate) StartDate, BankID, RatingAgencyID
+FROM Banks
+  LEFT JOIN dbo.ctl_ExternalRatingCounterparty AS erc ON (Banks.BankID = erc.CounterpartyID)
+GROUP BY BankID, RatingAgencyID),
+
+ReportRatingPrepare1 AS
+(SELECT
+  ld.BankID AS BankID,
+  cp.Name AS Bank,
+  ISNULL(rv.ID, 99) AS RatingValueID,
+  ROW_NUMBER()OVER(PARTITION BY cp.ID ORDER BY rv.ID) AS N
+FROM
+  LatestDates AS ld
+  LEFT JOIN dbo.ctl_ExternalRatingCounterparty AS erc ON (ld.BankID = erc.CounterpartyID
+  AND ld.RatingAgencyID = erc.RatingAgencyID
+  AND ld.StartDate = erc.StartDate)
+  INNER JOIN dbo.ctl_Counterparties AS cp ON (ld.BankID = cp.ID)
+  LEFT JOIN dbo.ctl_RatingValues AS rv ON (erc.RatingValueID = rv.ID)
+  LEFT JOIN dbo.ctl_RatingAgencies AS ra ON (erc.RatingAgencyID = ra.ID)
+),
+
+ReportRatingPrepare2 AS
+(SELECT
+	BankID,
+	Bank,
+	RatingValueID,
+	N
+FROM ReportRatingPrepare1
+WHERE N <=2),
+
+ReportRating AS
+(SELECT
+	BankID,
+	Bank,
+	Max(RatingValueID) AS preMaxRating
+FROM ReportRatingPrepare2
+GROUP BY BankID, Bank)
+
+SELECT
+  Banks.ReportDate,
+  rr.BankID,
+  rr.Bank,
+  rv.Name,
+  gl.BankLimit,
+  Banks.FirstUsage,
+  Banks.LastUsage
+FROM ReportRating AS rr
+  INNER JOIN Banks ON (rr.BankID = Banks.BankID)
+  LEFT JOIN ctl_RatingValues AS rv ON (rr.preMaxRating = rv.ID)
+  LEFT JOIN ctl_RatingGroups AS rg ON (rg.RatingID = rr.preMaxRating)
+  LEFT JOIN ctl_GroupLimits AS gl ON (gl.GroupNumber = rg.GroupID)
+ORDER BY rr.Bank

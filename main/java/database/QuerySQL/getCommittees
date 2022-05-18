@@ -1,0 +1,14 @@
+SELECT
+  dbo.ctl_Committees.ID AS ID,
+  dbo.ctl_Portfolios.Name AS Portfolio,
+  dbo.ctl_CommitteeStatuses.Name AS Status,
+  dbo.ctl_CommitteeLimitations.Name AS Limitations,
+  dbo.ctl_Committees.Comments AS Comments,
+  dbo.ctl_Committees.StartDate Date
+FROM
+    dbo.ctl_Committees
+  INNER JOIN dbo.ctl_Counterparties ON (dbo.ctl_Counterparties.ID = dbo.ctl_Committees.CounterpartyID)
+  LEFT OUTER JOIN dbo.ctl_Portfolios ON (dbo.ctl_Counterparties.PortfolioID = dbo.ctl_Portfolios.ID)
+  LEFT OUTER JOIN dbo.ctl_CommitteeLimitations ON (dbo.ctl_Committees.LimitationsID = dbo.ctl_CommitteeLimitations.ID)
+  LEFT OUTER JOIN dbo.ctl_CommitteeStatuses ON (dbo.ctl_Committees.StatusID = dbo.ctl_CommitteeStatuses.ID)WHERE
+  dbo.ctl_Committees.CounterpartyID = ?

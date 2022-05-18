@@ -1,0 +1,39 @@
+WITH MaxDate AS
+(SELECT Max(cmt.StartDate) AS MaxDate, cmt.CounterpartyID as CounterpartyID
+FROM dbo.ctl_Committees AS cmt
+GROUP BY CounterpartyID),
+
+LatestGroupType AS (SELECT MaxDate.CounterpartyID, cpg.Name AS Type
+FROM dbo.ctl_Committees AS cmt
+INNER JOIN MaxDate ON (cmt.CounterpartyID = MaxDate.CounterpartyID AND cmt.StartDate = MaxDate.MaxDate)
+INNER JOIN dbo.ctl_CounterpartyGroup AS cpg ON (cmt.GroupID = cpg.ID)),
+
+LatestDates AS
+(SELECT MAX(StartDate) StartDate, CounterpartyID
+FROM dbo.ctl_InternalRatingCounterparty
+GROUP BY CounterpartyID)
+
+SELECT
+  cp.ID,
+  cp.Name,
+  cp.ShortName,
+  rv.Name AS Rating,
+  rvwc.Name AS RatingWithoutCountry,
+  rc.Name AS RiskClass,
+  irc.StartDate AS StartDate,
+  irc.IsConservative,
+  fs.Date AS "FS Date",
+  fs.Standards,
+  irc.Analyst,
+  lgt.Type
+FROM
+  dbo.ctl_InternalRatingCounterparty AS irc
+  INNER JOIN LatestDates AS ld ON (irc.CounterpartyID = ld.CounterpartyID
+  AND irc.StartDate = ld.StartDate)
+  INNER JOIN dbo.ctl_RatingValues AS rv ON (irc.RatingValueID = rv.ID)
+  LEFT OUTER JOIN dbo.ctl_RatingValues AS rvwc ON (irc.RatingValueWithoutCountryID = rvwc.ID)
+  LEFT OUTER JOIN dbo.ctl_RiskClasses AS rc ON (irc.RiskClassID = rc.ID)
+  INNER JOIN dbo.ctl_Counterparties AS cp ON (cp.ID = irc.CounterpartyID)
+  LEFT OUTER JOIN dbo.ctl_FinancialStatements AS fs ON (cp.ID = fs.CounterpartyID) AND (irc.FinancialStatementID = fs.ID)
+  LEFT OUTER JOIN LatestGroupType AS lgt ON (lgt.CounterpartyID = irc.CounterpartyID)
+ORDER BY cp.Name

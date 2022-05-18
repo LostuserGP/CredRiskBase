@@ -1,0 +1,10 @@
+DECLARE @counterpartyid INT;
+DECLARE @date DATE;
+DECLARE @fs nvarchar(100);
+SET @counterpartyid = ?;
+SET @date = ?;
+SET @fs = ?;
+
+SELECT ID FROM dbo.ctl_FinancialStatements
+WHERE
+    CounterpartyID = @counterpartyid AND Date = @date AND Standards = @fs

@@ -1,0 +1,20 @@
+SELECT
+  gr.ID,
+  cp.Name Counterparty,
+  cg.Name Guarant,
+  gr.GuaranteeNumber Number,
+  cr.Name Currency,
+  CAST(gr.Amount as DECIMAL (15, 2)) Amount,
+  gt.Name Type,
+  gr.StartDate,
+  gr.EndDate
+FROM
+  dbo.ctl_Guarantees AS gr
+  INNER JOIN dbo.ctl_Counterparties AS cp ON (gr.CounterpartyID = cp.ID)
+  INNER JOIN dbo.ctl_Counterparties AS cg ON (gr.GuarantorID = cg.ID)
+  LEFT OUTER JOIN dbo.ctl_Currencies AS cr ON (gr.CurrencyID = cr.ID)
+  INNER JOIN dbo.ctl_GuaranteeTypes AS gt ON (gr.TypeID = gt.ID)
+WHERE
+  gr.ID = ?
+ORDER BY
+gr.EndDate DESC

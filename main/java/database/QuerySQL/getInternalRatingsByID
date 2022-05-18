@@ -1,0 +1,18 @@
+SELECT
+  dbo.ctl_InternalRatingCounterparty.StartDate AS RatingDate,
+  ratingFinal.Name AS Rating,
+  ratingWithoutCountry.Name AS RatingWithoutCountry,
+  dbo.ctl_RiskClasses.Name AS RiskClass,
+  dbo.ctl_InternalRatingCounterparty.IsConservative,
+  dbo.ctl_FinancialStatements.Date AS FSDate,
+  dbo.ctl_FinancialStatements.Standards,
+  dbo.ctl_InternalRatingCounterparty.Analyst,
+  dbo.ctl_InternalRatingCounterparty.Comments
+FROM
+  dbo.ctl_InternalRatingCounterparty
+  LEFT OUTER JOIN dbo.ctl_RatingValues ratingFinal ON (dbo.ctl_InternalRatingCounterparty.RatingValueID = ratingFinal.ID)
+  LEFT OUTER JOIN dbo.ctl_RatingValues ratingWithoutCountry ON (dbo.ctl_InternalRatingCounterparty.RatingValueWithoutCountryID = ratingWithoutCountry.ID)
+  LEFT OUTER JOIN dbo.ctl_RiskClasses ON (dbo.ctl_InternalRatingCounterparty.RiskClassID = dbo.ctl_RiskClasses.ID)
+  LEFT OUTER JOIN dbo.ctl_FinancialStatements ON (dbo.ctl_InternalRatingCounterparty.FinancialStatementID = dbo.ctl_FinancialStatements.ID)
+WHERE dbo.ctl_InternalRatingCounterparty.CounterpartyID = ?
+ORDER BY FSDate DESC

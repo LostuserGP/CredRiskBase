@@ -1,0 +1,18 @@
+WITH LatestDates AS
+(SELECT MAX(StartDate) StartDate, CountryID, RatingAgencyID
+FROM dbo.ctl_RatingCountry
+GROUP BY CountryID, RatingAgencyID)
+
+SELECT
+  dbo.ctl_RatingAgencies.Name AS RatingAgency,
+  dbo.ctl_RatingValues.Name AS Rating,
+  dbo.ctl_RatingCountry.StartDate
+FROM
+  dbo.ctl_RatingCountry
+  INNER JOIN LatestDates ON (LatestDates.CountryID = dbo.ctl_RatingCountry.CountryID
+  AND LatestDates.RatingAgencyID = dbo.ctl_RatingCountry.RatingAgencyID
+  AND LatestDates.StartDate = dbo.ctl_RatingCountry.StartDate)
+  INNER JOIN dbo.ctl_Countries ON (dbo.ctl_Countries.ID = dbo.ctl_RatingCountry.CountryID)
+  INNER JOIN dbo.ctl_RatingValues ON (dbo.ctl_RatingCountry.RatingValueID = dbo.ctl_RatingValues.ID)
+  INNER JOIN dbo.ctl_RatingAgencies ON (dbo.ctl_RatingCountry.RatingAgencyID = dbo.ctl_RatingAgencies.ID)
+WHERE dbo.ctl_Countries.ID = ?

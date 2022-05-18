@@ -1,0 +1,12 @@
+DELETE FROM
+  dbo.ctl_InternalRatingCounterparty
+WHERE
+  RatingValueID = ?
+  AND RatingValueWithoutCountryID = ?
+  AND RiskClassID = ?
+  AND IsConservative = ?
+  AND FinancialStatementID = ?
+  AND StartDate = ?
+  AND CounterpartyID = ?
+  AND Analyst = ?
+  AND Comments = ?

@@ -1,0 +1,29 @@
+DECLARE @ID INT;
+DECLARE @CounterpartyID INT;
+DECLARE @BankID INT;
+DECLARE @AgreeFirstDate DATE;
+DECLARE @AgreeEndDate DATE;
+DECLARE @GuaranteeEndDate DATE;
+DECLARE @Amount BIGINT;
+DECLARE @CurrencyID INT;
+DECLARE @GuaranteeNameID INT;
+SET @ID = ?;
+SET @CounterpartyID = (SELECT TOP 1 cp.ID FROM ctl_Counterparties AS cp WHERE cp.Name = ?);
+SET @BankID = (SELECT TOP 1 cp.ID FROM ctl_Counterparties AS cp WHERE cp.Name = ?);
+SET @AgreeFirstDate = ?;
+SET @AgreeEndDate = ?;
+SET @GuaranteeEndDate = ?;
+SET @Amount = ?;
+SET @CurrencyID = (SELECT TOP 1 cur.ID FROM ctl_Currencies AS cur WHERE cur.Name = ?);
+SET @GuaranteeNameID = (SELECT TOP 1 gn.ID FROM ctl_GuaranteeNames AS gn WHERE gn.GuaranteeName = ?);
+
+UPDATE dbo.ctl_GuaranteesLimits
+SET CounterpartyID = @CounterpartyID,
+BankID = @BankID,
+AgreeFirstDate = @AgreeFirstDate,
+AgreeEndDate = @AgreeEndDate,
+GuaranteeEndDate = @GuaranteeEndDate,
+Amount = @Amount,
+CurrencyID = @CurrencyID,
+GuaranteeNameID = GuaranteeNameID
+WHERE ID = @ID

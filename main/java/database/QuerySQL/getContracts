@@ -1,0 +1,12 @@
+SELECT
+	cp.ID,
+	cp.Name,
+	cd.Name,
+	cp.Longterm,
+	cp.Etp,
+	cp.Efet,
+	cp.Gtc
+FROM
+	dbo.ctl_Counterparties AS cp
+	LEFT JOIN dbo.ctl_Countries AS cd ON (cp.CountryOfRiskID = cd.ID)
+ORDER BY cp.Name

@@ -1,0 +1,21 @@
+SELECT
+  cp.Name AS Counterparty,
+  pf.Name AS Portfolio,
+  cr.Name AS CountryOfRisk,
+  cd.Name AS CountryOfDomicile,
+  cms.Name AS Status,
+  cml.Name AS Limitations,
+  cmt.StartDate Date,
+  cpg.Name AS Type
+FROM
+  dbo.ctl_Counterparties AS cp
+  LEFT JOIN dbo.ctl_Countries AS cr ON (cp.CountryOfDomicileID = cr.ID)
+  LEFT JOIN dbo.ctl_Countries AS cd ON (cp.CountryOfRiskID = cd.ID)
+  FULL OUTER JOIN dbo.ctl_Portfolios AS pf ON (cp.PortfolioID = pf.ID)
+  INNER JOIN dbo.ctl_Committees AS cmt ON (cp.ID = cmt.CounterpartyID)
+  INNER JOIN dbo.ctl_CounterpartyGroup AS cpg ON (cmt.GroupID = cpg.ID)
+  FULL OUTER JOIN dbo.ctl_CommitteeLimitations AS cml ON (cmt.LimitationsID = cml.ID)
+  FULL OUTER JOIN dbo.ctl_CommitteeStatuses AS cms ON (cmt.StatusID = cms.ID)
+WHERE
+  cp.Name IS NOT NULL AND cmt.StatusID = 1
+ORDER BY cp.Name

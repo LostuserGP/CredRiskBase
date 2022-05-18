@@ -1,0 +1,10 @@
+INSERT INTO ctl_RatingLimits
+	(GroupNumber,
+	RatingID,
+	GroupLimit,
+	BankLimit)
+VALUES (
+	?,
+	?,
+	?,
+	?)

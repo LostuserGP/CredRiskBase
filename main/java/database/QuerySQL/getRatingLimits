@@ -1,0 +1,3 @@
+SELECT gl.ID, rv.Name, gl.GroupLimit, gl.BankLimit
+FROM ctl_GroupLimits AS gl, ctl_RatingValues AS rv, ctl_RatingGroups AS rg
+WHERE gl.GroupNumber = rg.GroupID and rg.RatingID = rv.ID

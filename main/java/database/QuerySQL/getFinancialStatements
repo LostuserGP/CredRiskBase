@@ -1,0 +1,8 @@
+SELECT
+  cp.Name as Counterparty,
+  fs.Date,
+  fs.Standards,
+  fs.Comments
+FROM
+  dbo.ctl_FinancialStatements AS fs
+  INNER JOIN dbo.ctl_Counterparties AS cp ON (fs.CounterpartyID = cp.ID)

@@ -1,0 +1,119 @@
+WITH LatestDatesExternal as
+(SELECT MAX(StartDate) StartDate, CounterpartyID, RatingAgencyID
+FROM dbo.ctl_ExternalRatingCounterparty
+GROUP BY CounterpartyID, RatingAgencyID),
+
+LatestAndWorstRating AS
+(SELECT MAX(erc.RatingValueID) RatingValueID, erc.CounterpartyID
+FROM dbo.ctl_ExternalRatingCounterparty AS erc
+	INNER JOIN LatestDatesExternal AS lde ON (lde.CounterpartyID = erc.CounterpartyID AND lde.StartDate = erc.StartDate)
+GROUP BY erc.CounterpartyID),
+
+LatestDatesInternal AS
+(SELECT MAX(irc.StartDate) StartDate, irc.CounterpartyID
+FROM dbo.ctl_InternalRatingCounterparty AS irc
+GROUP BY irc.CounterpartyID),
+
+FinalInternalRatings AS
+(SELECT
+  cp.ID CounterpartyID,
+  cp.Name,
+  rv.Name AS Rating,
+  rvwc.Name AS RatingWithoutCountry,
+  rc.Name AS RiskClass,
+  irc.StartDate AS StartDate,
+  irc.IsConservative,
+  fs.Date AS "FS Date",
+  fs.Standards,
+  irc.Analyst
+FROM
+  dbo.ctl_InternalRatingCounterparty AS irc
+  INNER JOIN LatestDatesInternal AS ldi ON (irc.CounterpartyID = ldi.CounterpartyID
+  AND irc.StartDate = ldi.StartDate)
+  INNER JOIN dbo.ctl_RatingValues rv ON (irc.RatingValueID = rv.ID)
+  LEFT OUTER JOIN dbo.ctl_RatingValues rvwc ON (irc.RatingValueWithoutCountryID = rvwc.ID)
+  LEFT OUTER JOIN dbo.ctl_RiskClasses AS rc ON (irc.RiskClassID = rc.ID)
+  INNER JOIN dbo.ctl_Counterparties AS cp ON (cp.ID = irc.CounterpartyID)
+  LEFT OUTER JOIN dbo.ctl_FinancialStatements AS fs ON (cp.ID = fs.CounterpartyID)
+  AND (irc.FinancialStatementID = fs.ID)
+  ),
+
+FinalExternalRatings AS
+(SELECT Counterparty, MAX(RatingAgency) AS RatingAgency, Rating, CounterpartyID
+FROM
+(SELECT
+	cp.Name AS Counterparty,
+	ra.Name AS RatingAgency,
+	rv.Name AS Rating,
+	cp.ID AS CounterpartyID
+FROM
+	dbo.ctl_ExternalRatingCounterparty AS erc
+	INNER JOIN dbo.ctl_Counterparties AS cp ON (erc.CounterpartyID = cp.ID)
+	INNER JOIN dbo.ctl_RatingAgencies AS ra ON (erc.RatingAgencyID = ra.ID)
+	INNER JOIN LatestDatesExternal AS lde ON (lde.CounterpartyID = erc.CounterpartyID
+	AND lde.StartDate = erc.StartDate)
+	INNER JOIN LatestAndWorstRating AS lawr ON (lawr.RatingValueID = erc.RatingValueID
+	AND lawr.CounterpartyID = erc.CounterpartyID)
+	INNER JOIN dbo.ctl_RatingValues AS rv ON (rv.ID = erc.RatingValueID)
+) AS TMP
+GROUP BY Counterparty, Rating, CounterpartyID
+),
+
+DonorRatingsExternal AS
+(SELECT
+	cp.ID CounterpartyID,
+	cp.Name Counterparty,
+	donor.Name Donor,
+	fer.Rating,
+	fer.RatingAgency
+FROM dbo.ctl_Counterparties AS cp
+	INNER JOIN dbo.ctl_RatingDonor AS rd ON (cp.ID = rd.CounterpartyID)
+	INNER JOIN dbo.ctl_Counterparties AS donor ON (donor.ID = rd.DonorID)
+	INNER JOIN FinalExternalRatings AS fer ON (donor.ID = fer.CounterpartyID)
+),
+
+DonorRatingsInternal AS
+(SELECT
+	cp.ID CounterpartyID,
+	cp.Name Counterparty,
+	Donor.Name Donor,
+	fir.Rating
+FROM dbo.ctl_Counterparties AS cp
+	INNER JOIN dbo.ctl_RatingDonor AS rd ON (cp.ID = rd.CounterpartyID)
+	INNER JOIN dbo.ctl_Counterparties AS Donor ON (Donor.ID = rd.DonorID)
+	INNER JOIN FinalInternalRatings AS fir ON (Donor.ID = fir.CounterpartyID)
+)
+
+SELECT
+
+cp.Name AS Counterparty,
+
+CASE
+	WHEN (SELECT TOP 1 DonorID FROM dbo.ctl_RatingDonor WHERE CounterpartyID = cp.ID) IS NULL THEN
+     	CASE
+    	  WHEN (SELECT TOP 1 Rating FROM FinalInternalRatings WHERE CounterpartyID = cp.ID) IS NULL THEN
+          		(SELECT TOP 1 Rating FROM FinalExternalRatings WHERE CounterpartyID = cp.ID)
+          ELSE (SELECT TOP 1 Rating FROM FinalInternalRatings WHERE CounterpartyID = cp.ID) END
+	ELSE CASE
+          WHEN (SELECT TOP 1 Rating FROM DonorRatingsInternal WHERE CounterpartyID = cp.ID) IS NULL THEN
+          		(SELECT TOP 1 Rating FROM DonorRatingsExternal WHERE CounterpartyID = cp.ID)
+          ELSE (SELECT TOP 1 Rating FROM DonorRatingsInternal WHERE CounterpartyID = cp.ID) END
+END AS RatingValue,
+
+CASE
+	WHEN (SELECT TOP 1 DonorID FROM dbo.ctl_RatingDonor WHERE CounterpartyID = cp.ID) IS NULL THEN
+     	CASE
+    	  WHEN (SELECT TOP 1 Rating FROM FinalInternalRatings WHERE CounterpartyID = cp.ID) IS NULL THEN
+          		(SELECT TOP 1 RatingAgency FROM FinalExternalRatings WHERE CounterpartyID = cp.ID)
+          ELSE ('Internal') END
+	ELSE CASE
+          WHEN (SELECT TOP 1 Rating FROM DonorRatingsInternal WHERE CounterpartyID = cp.ID) IS NULL THEN
+          		(SELECT TOP 1 RatingAgency FROM DonorRatingsExternal WHERE CounterpartyID = cp.ID) + ' (Donored)'
+          ELSE ('Donor Internal') END
+END AS RatingSource,
+donor.Name Donor
+
+FROM
+	dbo.ctl_Counterparties AS cp
+	LEFT OUTER JOIN dbo.ctl_RatingDonor AS rd ON (rd.CounterpartyID = cp.ID)
+	LEFT OUTER JOIN dbo.ctl_Counterparties AS donor ON (rd.DonorID = donor.ID)

@@ -1,0 +1,20 @@
+DECLARE @id INT;
+SET @id = ?;
+
+SELECT
+  gl.ID,
+  cp.Name AS Counterparty,
+  banks.Name AS Bank,
+  gl.AgreeFirstDate,
+  gl.AgreeEndDate,
+  gl.GuaranteeEndDate,
+  (CONVERT(MONEY, gl.Amount)/100) AS Amount,
+  cur.Name AS Currency,
+  gn.GuaranteeName AS GuaranteeName
+FROM
+  ctl_GuaranteesLimits AS gl
+  LEFT JOIN ctl_GuaranteeNames AS gn ON (gl.GuaranteeNameID = gn.ID)
+  LEFT JOIN ctl_Counterparties AS cp ON (gl.CounterpartyID = cp.ID)
+  LEFT JOIN ctl_Counterparties AS banks ON (gl.BankID = banks.ID)
+  LEFT JOIN ctl_Currencies AS cur ON (gl.CurrencyID = cur.ID)
+WHERE gl.ID = @id

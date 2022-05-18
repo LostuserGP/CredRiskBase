@@ -1,0 +1,23 @@
+SELECT
+	gr.DaughterID,
+	gr.ReportDate,
+	bank.Name AS Bank,
+	cp.Name AS Counterparty,
+	gr.Number,
+	gr.StartDate,
+	gr.FinishDate,
+	cur.Name AS Currency,
+	CONVERT(MONEY, gr.FirstAmount)/100 AS FirstAmount,
+	CONVERT(MONEY, gr.StartMonthAmount)/100 AS StartMonthAmount,
+	CONVERT(MONEY, gr.ChangeAmount)/100 AS ChangeAmount,
+	CONVERT(MONEY, gr.EndMonthAmount)/100 AS EndMonthAmount,
+	CONVERT(MONEY, gr.OperationAmount)/100 AS OperationAmount,
+	gr.GuaranteeType,
+	gr.BenificiaryName,
+	gr.BenificiaryCode,
+	gr.ApprovalType,
+	gr.ApprovalDate,
+	gr.ApprovalNumber,
+	gr.Note
+FROM ctl_GuaranteesReports AS gr, ctl_Counterparties AS cp, ctl_Counterparties AS bank, ctl_Currencies AS cur
+WHERE gr.BankID = bank.ID and gr.CounterpartyID = cp.ID and gr.CurrencyID = cur.ID

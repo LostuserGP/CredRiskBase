@@ -1,0 +1,4 @@
+SELECT TOP 1 erc.StartDate, c.Name, erc.RatingValueID FROM  dbo.ctl_ExternalRatingCounterparty erc
+INNER JOIN dbo.ctl_Counterparties c ON (c.ID = erc.CounterpartyID)
+WHERE (c.BloombergTicker = ? AND erc.RatingAgencyID = ?)
+ORDER BY  erc.StartDate DESC

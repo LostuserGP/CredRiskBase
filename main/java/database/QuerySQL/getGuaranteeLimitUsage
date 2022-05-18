@@ -1,0 +1,16 @@
+WITH
+GuaranteeReport AS
+(SELECT
+	CounterpartyID,
+	BankID,
+	SUM(EndMonthAmount) AS Usage
+FROM ctl_GuaranteesReports AS gr
+WHERE ReportDate = (SELECT Max(ReportDate) FROM ctl_GuaranteesReports)
+GROUP BY CounterpartyID, BankID)
+
+SELECT banks.Name AS Bank, cp.Name AS Counterparty, gl.Amount AS Limit, gr.Usage
+FROM ctl_GuaranteesLimits AS gl
+  LEFT JOIN GuaranteeReport AS gr ON (gl.CounterpartyID = gr.CounterpartyID
+    AND gl.BankID = gr.BankID)
+  LEFT JOIN ctl_Counterparties AS cp ON (gl.CounterpartyID = cp.ID)
+  LEFT JOIN ctl_Counterparties AS banks ON (gl.BankID = banks.ID)

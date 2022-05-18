@@ -1,0 +1,7 @@
+SELECT
+	cp.Name as Bank
+FROM
+	dbo.ctl_Counterparties AS cp
+	INNER JOIN dbo.ctl_Sectors AS s ON (cp.SectorID = s.ID)
+WHERE s.SectorName = 'Financial'
+ORDER BY cp.Name

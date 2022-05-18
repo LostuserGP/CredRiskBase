@@ -1,0 +1,4 @@
+SELECT TOP 1 rc.StartDate, c.Name, rc.RatingValueID FROM dbo.ctl_RatingCountry rc
+ INNER JOIN dbo.ctl_Countries c ON (c.ID = rc.CountryID)
+WHERE  (c.BloombergTicker = ? AND rc.RatingAgencyID = ?)
+ORDER BY  rc.StartDate DESC

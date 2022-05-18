@@ -1,0 +1,42 @@
+INSERT INTO ctl_GuaranteesReports
+           (DaughterID
+           ,ReportDate
+           ,BankID
+           ,CounterpartyID
+           ,Number
+           ,StartDate
+           ,FinishDate
+           ,CurrencyID
+           ,FirstAmount
+           ,StartMonthAmount
+           ,ChangeAmount
+           ,EndMonthAmount
+           ,OperationAmount
+           ,GuaranteeType
+           ,BenificiaryName
+           ,BenificiaryCode
+           ,ApprovalType
+           ,ApprovalDate
+           ,ApprovalNumber
+           ,Note)
+     VALUES
+           (?,
+           ?,
+           (SELECT TOP 1 cp.ID FROM ctl_Counterparties AS cp WHERE cp.Name = ?),
+           (SELECT TOP 1 cp.ID FROM ctl_Counterparties AS cp WHERE cp.Name = ?),
+           ?,
+           ?,
+           ?,
+           ?,
+           ?,
+           ?,
+           ?,
+           ?,
+           ?,
+           ?,
+           ?,
+           ?,
+           ?,
+           ?,
+           ?,
+           ?)

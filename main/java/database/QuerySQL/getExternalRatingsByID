@@ -1,0 +1,10 @@
+SELECT
+  dbo.ctl_RatingAgencies.Name as RatingAgency,
+  dbo.ctl_RatingValues.Name as Rating,
+  dbo.ctl_ExternalRatingCounterparty.StartDate
+FROM
+  dbo.ctl_ExternalRatingCounterparty
+  INNER JOIN dbo.ctl_RatingAgencies ON (dbo.ctl_ExternalRatingCounterparty.RatingAgencyID = dbo.ctl_RatingAgencies.ID)
+  INNER JOIN dbo.ctl_RatingValues ON (dbo.ctl_ExternalRatingCounterparty.RatingValueID = dbo.ctl_RatingValues.ID)
+WHERE dbo.ctl_ExternalRatingCounterparty.CounterpartyID = ?
+ORDER BY StartDate DESC

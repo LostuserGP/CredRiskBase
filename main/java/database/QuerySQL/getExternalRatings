@@ -1,0 +1,17 @@
+With LatestDates as
+(SELECT MAX(StartDate) StartDate, CounterpartyID, RatingAgencyID
+FROM dbo.ctl_ExternalRatingCounterparty
+GROUP BY CounterpartyID, RatingAgencyID)
+
+SELECT
+  cp.Name AS Counterparty,
+  ra.Name AS RatingAgency,
+  rv.Name AS Rating,
+  erc.StartDate
+FROM
+  dbo.ctl_ExternalRatingCounterparty AS erc
+  INNER JOIN dbo.ctl_RatingAgencies AS ra ON (erc.RatingAgencyID = ra.ID)
+  INNER JOIN LatestDates AS ld ON (ld.CounterpartyID = erc.CounterpartyID AND ld.StartDate = erc.StartDate AND ld.RatingAgencyID = ra.ID)
+  INNER JOIN dbo.ctl_Counterparties AS cp ON (cp.ID = erc.CounterpartyID)
+  INNER JOIN dbo.ctl_RatingValues AS rv ON (erc.RatingValueID = rv.ID)
+ORDER BY cp.Name

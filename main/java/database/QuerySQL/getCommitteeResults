@@ -1,0 +1,18 @@
+SELECT
+  cm.ID AS ID,
+  cp.Name AS Counterparty,
+  pf.Name AS Portfolio,
+  cr.Name AS CountryOfRisk,
+  cd.Name AS CountryOfDomicile,
+  cms.Name AS Status,
+  cml.Name AS Limitations,
+  cm.Comments AS Comments,
+  cm.StartDate Date
+FROM
+  dbo.ctl_Committees AS cm
+  LEFT JOIN dbo.ctl_Counterparties AS cp ON (cp.ID = cm.CounterpartyID)
+  LEFT OUTER JOIN dbo.ctl_Portfolios AS pf ON (cp.PortfolioID = pf.ID)
+  LEFT JOIN dbo.ctl_Countries AS cr ON (cp.CountryOfDomicileID = cr.ID)
+  LEFT JOIN dbo.ctl_Countries AS cd ON (cp.CountryOfRiskID = cd.ID)
+  LEFT OUTER JOIN dbo.ctl_CommitteeLimitations AS cml ON (cm.LimitationsID = cml.ID)
+  LEFT OUTER JOIN dbo.ctl_CommitteeStatuses AS cms ON (cm.StatusID = cms.ID)

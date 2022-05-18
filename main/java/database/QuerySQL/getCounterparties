@@ -1,0 +1,25 @@
+SELECT
+	cp.ID,
+	cp.Name,
+	cp.ShortName,
+	cp.BloombergTicker,
+	s.SectorName,
+	cr.Name AS CountryOfRisk,
+	cd.Name AS CountryOfDomicile,
+	cp.intraGroup,
+	ps.Name Portfolio,
+	cp.Comments,
+	counterpartyDonor.Name Donor,
+	cp.StartDate,
+	cp.Duns,
+	cp.Causes,
+	cp.isSRK
+FROM
+	dbo.ctl_Counterparties AS cp
+	LEFT OUTER JOIN dbo.ctl_RatingDonor AS rd ON (rd.CounterpartyID = cp.id)
+	LEFT OUTER JOIN dbo.ctl_Counterparties counterpartyDonor ON (counterpartyDonor.ID = rd.DonorID)
+	FULL OUTER JOIN dbo.ctl_Sectors AS s ON (cp.SectorID = s.ID)
+	LEFT JOIN dbo.ctl_Countries AS cr ON (cp.CountryOfDomicileID = cr.ID)
+	LEFT JOIN dbo.ctl_Countries AS cd ON (cp.CountryOfRiskID = cd.ID)
+	LEFT OUTER JOIN dbo.ctl_Portfolios AS ps ON (cp.PortfolioID = ps.ID)
+ORDER BY cp.Name
